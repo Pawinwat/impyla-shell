@@ -5,6 +5,7 @@ from impala.dbapi import connect
 import configparser
 import os
 from prettytable import PrettyTable
+import time
 
 def execute_impala_query(query):
     # Get the absolute path to the script's directory
@@ -30,6 +31,8 @@ def execute_impala_query(query):
     cursor = conn.cursor()
 
     try:
+        start_time = time.time()
+
         # Execute the provided query
         cursor.execute(query)
 
@@ -47,6 +50,10 @@ def execute_impala_query(query):
         # Print the table
         print(table)
 
+        end_time = time.time()
+        time_used = end_time - start_time
+        print(f"\nQuery executed in {time_used:.4f} seconds")
+
     except Exception as e:
         print("Error executing query:", e)
 
@@ -59,6 +66,9 @@ def main():
     parser = argparse.ArgumentParser(description="Execute an Impala query")
     parser.add_argument("-q", "--query", help="Impala query to execute", required=True)
     args = parser.parse_args()
+
+    print("Executing Impala Query:")
+    print(args.query)
 
     execute_impala_query(args.query)
 
