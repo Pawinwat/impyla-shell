@@ -4,12 +4,13 @@ import argparse
 from impala.dbapi import connect
 import configparser
 import os
+from prettytable import PrettyTable
 
 def execute_impala_query(query):
     # Get the absolute path to the script's directory
     script_dir = os.path.dirname(os.path.abspath(__file__))
 
-    # Use the absolute path to the config file
+    # Use the absolute path to the new config file
     config_file = os.path.join(script_dir, 'impyla-config.ini')
 
     # Read connection details from the config file
@@ -32,9 +33,19 @@ def execute_impala_query(query):
         # Execute the provided query
         cursor.execute(query)
 
-        # Fetch the results if needed
-        results = cursor.fetchall()
-        print("Query results:", results)
+        # Fetch the column names
+        columns = [desc[0] for desc in cursor.description]
+
+        # Create a PrettyTable with column names
+        table = PrettyTable(columns)
+
+        # Fetch and add rows to the table
+        rows = cursor.fetchall()
+        for row in rows:
+            table.add_row(row)
+
+        # Print the table
+        print(table)
 
     except Exception as e:
         print("Error executing query:", e)
