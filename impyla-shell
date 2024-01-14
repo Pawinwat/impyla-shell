@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 import sys
 import argparse
 from impala.dbapi import connect
@@ -7,7 +7,7 @@ import os
 from prettytable import PrettyTable
 import time
 
-def execute_impala_query(query):
+def execute_impala_query(query, use_kerberos):
     # Get the absolute path to the script's directory
     script_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -23,9 +23,17 @@ def execute_impala_query(query):
     database = config.get('impala', 'database')
     username = config.get('impala', 'username')
     password = config.get('impala', 'password')
+    realm = config.get('impala', 'realm')
 
-    # Establish a connection to Impala
-    conn = connect(host=host, port=port, database=database, user=username, password=password)
+    if use_kerberos:
+        # Authenticate with Kerberos
+        service = "impala"
+
+        # Establish a connection to Impala using the Kerberos token
+        conn = connect(host=host, port=port, database=database, auth_mechanism='GSSAPI', kerberos_service=service)
+    else:
+        # Establish a connection to Impala using username and password
+        conn = connect(host=host, port=port, database=database, user=username, password=password)
 
     # Create a cursor object to execute queries
     cursor = conn.cursor()
@@ -62,15 +70,26 @@ def execute_impala_query(query):
         cursor.close()
         conn.close()
 
+def read_query_from_file(file_path):
+    try:
+        with open(file_path, 'r') as file:
+            return file.read()
+    except Exception as e:
+        print(f"Error reading query from file: {e}")
+        sys.exit(1)
+
 def main():
     parser = argparse.ArgumentParser(description="Execute an Impala query")
-    parser.add_argument("-q", "--query", help="Impala query to execute", required=True)
+    parser.add_argument("-f", "--file", help="File containing Impala query")
+    parser.add_argument("--kerberos", help="Use Kerberos for authentication", action="store_true")
     args = parser.parse_args()
 
-    print("Executing Impala Query:")
-    print(args.query)
-
-    execute_impala_query(args.query)
+    if args.file:
+        query = read_query_from_file(args.file)
+        print(f"Executing Impala Query from file {args.file}:\n{query}")
+        execute_impala_query(query, args.kerberos)
+    else:
+        print("No query file provided. Use the -f/--file option to specify a file containing the query.")
 
 if __name__ == "__main__":
     main()
