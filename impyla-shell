@@ -81,15 +81,22 @@ def read_query_from_file(file_path):
 def main():
     parser = argparse.ArgumentParser(description="Execute an Impala query")
     parser.add_argument("-f", "--file", help="File containing Impala query")
+    parser.add_argument("-q", "--query", help="Impala query to execute")
     parser.add_argument("--kerberos", help="Use Kerberos for authentication", action="store_true")
     args = parser.parse_args()
 
-    if args.file:
+    if args.file and args.query:
+        print("Error: Both file and direct query options are provided. Please choose one.")
+        sys.exit(1)
+    elif args.file:
         query = read_query_from_file(args.file)
         print(f"Executing Impala Query from file {args.file}:\n{query}")
         execute_impala_query(query, args.kerberos)
+    elif args.query:
+        print(f"Executing Impala Query:\n{args.query}")
+        execute_impala_query(args.query, args.kerberos)
     else:
-        print("No query file provided. Use the -f/--file option to specify a file containing the query.")
-
+        print("Error: No query provided. Use the -f/--file option for a file or -q/--query option for a direct query.")
+        sys.exit(1)
 if __name__ == "__main__":
     main()
