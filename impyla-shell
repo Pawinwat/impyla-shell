@@ -30,7 +30,7 @@ def execute_impala_query(query, use_kerberos):
         service = "impala"
 
         # Establish a connection to Impala using the Kerberos token
-        conn = connect(host=host, port=port, database=database, auth_mechanism='GSSAPI', kerberos_service=service)
+        conn = connect(host=host, port=port, database=database, auth_mechanism='GSSAPI', kerberos_service_name=service,use_ssl=True)
     else:
         # Establish a connection to Impala using username and password
         conn = connect(host=host, port=port, database=database, user=username, password=password)
